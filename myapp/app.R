@@ -1,9 +1,9 @@
 library(shiny)
 library(reticulate)
-# library(tidyr)
+library(tidyverse)
 # library(tm)
 # library(topicmodels)
-library(dplyr)
+#library(dplyr)
 
 # Load the data from the fixed CSV file
 recode_data=read.csv("updated_recode_project_keywords_20240926_gensim2.csv", stringsAsFactors = F)
@@ -14,11 +14,11 @@ knowledge_base <- recode_data %>%
   separate_rows(keywords..LlaMA3.8B., sep = "\n") %>%
   mutate(keywords = trimws(keywords..LlaMA3.8B.))  # Remove any leading/trailing whitespace
 
-# Create a Document-Term Matrix
-dtm <- DocumentTermMatrix(Corpus(VectorSource(knowledge_base$keywords)))
-
-# Fit a Latent Dirichlet Allocation (LDA) model
-lda_model <- LDA(dtm, k = 5)  # Adjust 'k' for the number of topics
+# # Create a Document-Term Matrix
+# dtm <- DocumentTermMatrix(Corpus(VectorSource(knowledge_base$keywords)))
+# 
+# # Fit a Latent Dirichlet Allocation (LDA) model
+# lda_model <- LDA(dtm, k = 5)  # Adjust 'k' for the number of topics
 
 py_code <- "
 import sys
@@ -87,7 +87,7 @@ ui <- fluidPage(
 )
 
 # Define server logic
-server <- function(input, output) {
+server <- function(input, output, session) {
   
   observeEvent(input$submit, {
     user_question <- input$user_input
@@ -116,9 +116,9 @@ server <- function(input, output) {
       "No matching projects found."
     }
     
-    # Extract topics from the response
-    new_dtm <- DocumentTermMatrix(Corpus(VectorSource(user_question)))
-    topic_distribution <- posterior(lda_model, new_dtm)$topics
+    # # Extract topics from the response
+    # new_dtm <- DocumentTermMatrix(Corpus(VectorSource(user_question)))
+    # topic_distribution <- posterior(lda_model, new_dtm)$topics
     
     output$response <- renderText({
       response_text
@@ -127,6 +127,12 @@ server <- function(input, output) {
     # output$topics <- renderTable({
     #   as.data.frame(topic_distribution)
     # })
+  })
+  
+  # Trigger initial rendering
+  observe({
+    updateTextInput(session, "user_input", value = " ")
+  
   })
 }
 
